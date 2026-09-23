@@ -5,40 +5,49 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
+
+class fit_transform:
+    """Simple reusable transformer that standardizes numeric columns while preserving the original schema."""
+
+    def __init__(self, numeric_columns=None):
+        self.numeric_columns = numeric_columns
+        self.means_ = None
+        self.stds_ = None
+        self.columns_ = None
+
+    def fit(self, X, y=None):
+        X_df = pd.DataFrame(X)
+        if self.numeric_columns is None:
+            self.numeric_columns = X_df.select_dtypes(include=[np.number]).columns.tolist()
+
+        self.columns_ = list(X_df.columns)
+        numeric = X_df[self.numeric_columns]
+        self.means_ = numeric.mean()
+        self.stds_ = numeric.std(ddof=0).replace(0, 1)
+        return self
+
+    def transform(self, X):
+        if self.means_ is None or self.stds_ is None:
+            raise ValueError("This fit_transform instance must be fit before transform().")
+
+        X_df = pd.DataFrame(X)
+        transformed = X_df.copy()
+        for col in self.numeric_columns:
+            if col in transformed.columns:
+                transformed[col] = (transformed[col] - self.means_[col]) / self.stds_[col]
+        return transformed
+
+    def fit_transform(self, X, y=None):
+        self.fit(X, y)
+        return self.transform(X)
+
+
 st.set_page_config(page_title="Travel Recommender Dual Engine", page_icon="✈️", layout="wide")
 
-# ==========================================
+# 
 # 1. DATA PREPROCESSING & PIPELINE
-# ==========================================
+# 
 @st.cache_data
-<<<<<<< HEAD
-<<<<<<< HEAD
-def load_and_preprocess_data():
-    df = pd.read_csv('traveler-trip-data.csv')
-
-    # Clean missing values
-    df['Destination'] = df['Destination'].fillna('Unknown')
-=======
-def load_and_clean_data():
-    df = pd.read_csv('traveler-trip-data.csv')
-
-    # Data Cleaning
-    df['Destination'] = df['Destination'].fillna('Unknown')
-    df['Traveler name'] = df['Traveler name'].fillna('Unknown')
->>>>>>> 15c953812e258433aac0f809a9cccdc28ce5afc8
-    df['Traveler age'] = df['Traveler age'].fillna(df['Traveler age'].median())
-    df['Accommodation cost'] = pd.to_numeric(df['Accommodation cost'], errors='coerce').fillna(0)
-    df['Transportation cost'] = pd.to_numeric(df['Transportation cost'], errors='coerce').fillna(0)
-    df['Duration (days)'] = df['Duration (days)'].fillna(df['Duration (days)'].median())
-    df['Accommodation type'] = df['Accommodation type'].fillna('Unknown')
-    df['Transportation type'] = df['Transportation type'].fillna('Unknown')
-
-<<<<<<< HEAD
-    # Destination type mapping with safe lookup fallback
-=======
-    # Map Destination Categories
->>>>>>> 15c953812e258433aac0f809a9cccdc28ce5afc8
-=======
 def load_and_clean_data():
     df = pd.read_csv('traveler-trip-data.csv')
 
@@ -53,7 +62,6 @@ def load_and_clean_data():
     df['Transportation type'] = df['Transportation type'].fillna('Unknown')
 
     # Map Destination Categories
->>>>>>> 15c953812e258433aac0f809a9cccdc28ce5afc8
     destination_type_map = {
         'London, UK': 'city', 'Phuket, Thailand': 'beach', 'Bali, Indonesia': 'beach',
         'New York, USA': 'city', 'Tokyo, Japan': 'city', 'Paris, France': 'city',
@@ -65,51 +73,28 @@ def load_and_clean_data():
         'Rome': 'city', 'Bangkok': 'city', 'Hawaii': 'beach', 'Athens, Greece': 'mountain',
         'Cape Town, South Africa': 'mountain', 'Auckland, New Zealand': 'mountain'
     }
-    df['Destination Type'] = df['Destination'].apply(lambda x: destination_type_map.get(x, 'city'))
-<<<<<<< HEAD
-<<<<<<< HEAD
+    df['Destination Type'] = df['Destination'].map(destination_type_map).fillna('city')
 
     # Feature Engineering
     df['Total cost'] = df['Accommodation cost'] + df['Transportation cost']
-
-    # Destination Aggregation
-=======
-    df['Total cost'] = df['Accommodation cost'] + df['Transportation cost']
-
     return df
 
-=======
-    df['Total cost'] = df['Accommodation cost'] + df['Transportation cost']
 
-    return df
-
->>>>>>> 15c953812e258433aac0f809a9cccdc28ce5afc8
 df = load_and_clean_data()
 
-# ==========================================
+#
 # 2. CONTENT-BASED FILTERING SETUP
-# ==========================================
+#
 @st.cache_data
 def build_content_model(df):
-<<<<<<< HEAD
->>>>>>> 15c953812e258433aac0f809a9cccdc28ce5afc8
-=======
->>>>>>> 15c953812e258433aac0f809a9cccdc28ce5afc8
-    destination_profiles = df.groupby('Destination').agg({
+    destination_profiles = df.groupby('Destination', as_index=False).agg({
         'Destination Type': 'first',
         'Total cost': 'mean',
         'Duration (days)': 'mean',
         'Accommodation type': lambda x: x.mode()[0] if not x.mode().empty else 'Unknown',
         'Transportation type': lambda x: x.mode()[0] if not x.mode().empty else 'Unknown'
-    }).reset_index()
+    })
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-    # Feature Preprocessor Matrix
-=======
->>>>>>> 15c953812e258433aac0f809a9cccdc28ce5afc8
-=======
->>>>>>> 15c953812e258433aac0f809a9cccdc28ce5afc8
     num_features = ['Total cost', 'Duration (days)']
     cat_features = ['Destination Type', 'Accommodation type', 'Transportation type']
 
@@ -119,23 +104,15 @@ def build_content_model(df):
             ('cat', OneHotEncoder(handle_unknown='ignore'), cat_features)
         ]
     )
-<<<<<<< HEAD
-<<<<<<< HEAD
 
     feature_matrix = preprocessor.fit_transform(destination_profiles)
-
-=======
-    feature_matrix = preprocessor.fit_transform(destination_profiles)
->>>>>>> 15c953812e258433aac0f809a9cccdc28ce5afc8
-=======
-    feature_matrix = preprocessor.fit_transform(destination_profiles)
->>>>>>> 15c953812e258433aac0f809a9cccdc28ce5afc8
     return destination_profiles, preprocessor, feature_matrix
+
 
 destination_profiles, preprocessor, content_feature_matrix = build_content_model(df)
 
-<<<<<<< HEAD
-<<<<<<< HEAD
+
+
 # App UI
 st.title("✈️ AI Travel Recommendation System")
 st.markdown("Find your next travel destination based on your budget, travel duration, and scenery preference.")
@@ -169,27 +146,10 @@ if st.button("Get Recommendations"):
     recommendations = filtered.sort_values(by='Match Score (%)', ascending=False).head(top_n)
 
     st.subheader("Top Recommended Destinations")
-=======
-# ==========================================
+
+# 
 # 3. COLLABORATIVE FILTERING SETUP
-# ==========================================
-@st.cache_data
-def build_collaborative_model(df):
-    # Construct User-Item Matrix from original dataset
-    # Implicit rating = normalized cost-per-day engagement score (1 to 5 scale)
-    df_collab = df.copy()
-    df_collab['Cost_Per_Day'] = df_collab['Total cost'] / np.maximum(df_collab['Duration (days)'], 1)
-    
-    # Scale Cost_Per_Day to an implicit 1-5 rating range
-    min_cpd = df_collab['Cost_Per_Day'].min()
-    max_cpd = df_collab['Cost_Per_Day'].max()
-    df_collab['Implicit_Rating'] = 1 + 4 * (df_collab['Cost_Per_Day'] - min_cpd) / (max_cpd - min_cpd + 1e-5)
->>>>>>> 15c953812e258433aac0f809a9cccdc28ce5afc8
-    
-=======
-# ==========================================
-# 3. COLLABORATIVE FILTERING SETUP
-# ==========================================
+# 
 @st.cache_data
 def build_collaborative_model(df):
     # Construct User-Item Matrix from original dataset
@@ -202,7 +162,22 @@ def build_collaborative_model(df):
     max_cpd = df_collab['Cost_Per_Day'].max()
     df_collab['Implicit_Rating'] = 1 + 4 * (df_collab['Cost_Per_Day'] - min_cpd) / (max_cpd - min_cpd + 1e-5)
     
->>>>>>> 15c953812e258433aac0f809a9cccdc28ce5afc8
+
+# 
+# 3. COLLABORATIVE FILTERING SETUP
+# 
+@st.cache_data
+def build_collaborative_model(df):
+    # Construct User-Item Matrix from original dataset
+    # Implicit rating = normalized cost-per-day engagement score (1 to 5 scale)
+    df_collab = df.copy()
+    df_collab['Cost_Per_Day'] = df_collab['Total cost'] / np.maximum(df_collab['Duration (days)'], 1)
+    
+    # Scale Cost_Per_Day to an implicit 1-5 rating range
+    min_cpd = df_collab['Cost_Per_Day'].min()
+    max_cpd = df_collab['Cost_Per_Day'].max()
+    df_collab['Implicit_Rating'] = 1 + 4 * (df_collab['Cost_Per_Day'] - min_cpd) / (max_cpd - min_cpd + 1e-5)
+    
     user_item_matrix = df_collab.pivot_table(
         index='Traveler name', 
         columns='Destination', 
@@ -222,9 +197,9 @@ def build_collaborative_model(df):
 
 user_item_matrix, user_similarity_df = build_collaborative_model(df)
 
-# ==========================================
+# 
 # 4. APP INTERFACE WITH SEPARATE TABS
-# ==========================================
+# 
 st.title("✈️ Travel Recommendation Engine")
 st.markdown("Comparing Content-Based and Collaborative Filtering using `traveler-trip-data.csv`.")
 
