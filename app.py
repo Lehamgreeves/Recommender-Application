@@ -10,18 +10,18 @@ st.set_page_config(page_title="AI Travel Recommender", page_icon="✈️", layou
 
 @st.cache_data
 def load_and_preprocess_data():
-    df = pd.read_csv('traveler-trip-data.csv')[cite: 1]
+    df = pd.read_csv('traveler-trip-data.csv')
 
-    # Clean missing values[cite: 1]
-    df['Destination'] = df['Destination'].fillna('Unknown')[cite: 1]
-    df['Traveler age'] = df['Traveler age'].fillna(df['Traveler age'].median())[cite: 1]
-    df['Accommodation cost'] = pd.to_numeric(df['Accommodation cost'], errors='coerce').fillna(0)[cite: 1]
-    df['Transportation cost'] = pd.to_numeric(df['Transportation cost'], errors='coerce').fillna(0)[cite: 1]
-    df['Duration (days)'] = df['Duration (days)'].fillna(df['Duration (days)'].median())[cite: 1]
-    df['Accommodation type'] = df['Accommodation type'].fillna('Unknown')[cite: 1]
-    df['Transportation type'] = df['Transportation type'].fillna('Unknown')[cite: 1]
+    # Clean missing values
+    df['Destination'] = df['Destination'].fillna('Unknown')
+    df['Traveler age'] = df['Traveler age'].fillna(df['Traveler age'].median())
+    df['Accommodation cost'] = pd.to_numeric(df['Accommodation cost'], errors='coerce').fillna(0)
+    df['Transportation cost'] = pd.to_numeric(df['Transportation cost'], errors='coerce').fillna(0)
+    df['Duration (days)'] = df['Duration (days)'].fillna(df['Duration (days)'].median())
+    df['Accommodation type'] = df['Accommodation type'].fillna('Unknown')
+    df['Transportation type'] = df['Transportation type'].fillna('Unknown')
 
-    # Destination type mapping[cite: 1]
+    # Destination type mapping with safe lookup fallback
     destination_type_map = {
         'London, UK': 'city', 'Phuket, Thailand': 'beach', 'Bali, Indonesia': 'beach',
         'New York, USA': 'city', 'Tokyo, Japan': 'city', 'Paris, France': 'city',
