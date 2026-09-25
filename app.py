@@ -5,43 +5,6 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
-
-class fit_transform:
-    """Simple reusable transformer that standardizes numeric columns while preserving the original schema."""
-
-    def __init__(self, numeric_columns=None):
-        self.numeric_columns = numeric_columns
-        self.means_ = None
-        self.stds_ = None
-        self.columns_ = None
-
-    def fit(self, X, y=None):
-        X_df = pd.DataFrame(X)
-        if self.numeric_columns is None:
-            self.numeric_columns = X_df.select_dtypes(include=[np.number]).columns.tolist()
-
-        self.columns_ = list(X_df.columns)
-        numeric = X_df[self.numeric_columns]
-        self.means_ = numeric.mean()
-        self.stds_ = numeric.std(ddof=0).replace(0, 1)
-        return self
-
-    def transform(self, X):
-        if self.means_ is None or self.stds_ is None:
-            raise ValueError("This fit_transform instance must be fit before transform().")
-
-        X_df = pd.DataFrame(X)
-        transformed = X_df.copy()
-        for col in self.numeric_columns:
-            if col in transformed.columns:
-                transformed[col] = (transformed[col] - self.means_[col]) / self.stds_[col]
-        return transformed
-
-    def fit_transform(self, X, y=None):
-        self.fit(X, y)
-        return self.transform(X)
-
-
 st.set_page_config(page_title="Travel Recommender Dual Engine", page_icon="✈️", layout="wide")
 
 # ==========================================
