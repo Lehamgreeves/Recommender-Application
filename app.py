@@ -7,9 +7,9 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 st.set_page_config(page_title="Travel Recommender Dual Engine", page_icon="✈️", layout="wide")
 
-# ==========================================
+
 # 1. DATA PREPROCESSING & PIPELINE
-# ==========================================
+
 @st.cache_data
 def load_and_clean_data():
     df = pd.read_csv('traveler-trip-data.csv')
@@ -43,9 +43,9 @@ def load_and_clean_data():
 
 df = load_and_clean_data()
 
-# ==========================================
+
 # 2. CONTENT-BASED FILTERING SETUP
-# ==========================================
+
 @st.cache_data
 def build_content_model(df):
     destination_profiles = df.groupby('Destination').agg({
@@ -70,9 +70,8 @@ def build_content_model(df):
 
 destination_profiles, preprocessor, content_feature_matrix = build_content_model(df)
 
-# ==========================================
 # 3. COLLABORATIVE FILTERING SETUP
-# ==========================================
+
 @st.cache_data
 def build_collaborative_model(df):
     df_collab = df.copy()
@@ -101,17 +100,17 @@ def build_collaborative_model(df):
 
 user_item_matrix, user_similarity_df = build_collaborative_model(df)
 
-# ==========================================
+
 # 4. APP INTERFACE WITH SEPARATE TABS
-# ==========================================
+
 st.title("✈️ Travel Recommendation Engine")
 st.markdown("Comparing Content-Based and Collaborative Filtering using `traveler-trip-data.csv`.")
 
 tab1, tab2 = st.tabs(["🧩 Content-Based Algorithm", "🤝 Collaborative Filtering Algorithm"])
 
-# ------------------------------------------
+
 # TAB 1: CONTENT-BASED ALGORITHM
-# ------------------------------------------
+
 with tab1:
     st.header("Content-Based Recommendation")
     st.caption("Recommends destinations by calculating feature similarity (Cost, Duration, Scenery, Accommodation).")
@@ -173,9 +172,8 @@ with tab1:
             
             st.dataframe(recs[['Destination', 'Destination Type', 'Total cost', 'Duration (days)', 'Similarity Score (%)']])
 
-# ------------------------------------------
 # TAB 2: COLLABORATIVE FILTERING ALGORITHM
-# ------------------------------------------
+
 with tab2:
     st.header("Collaborative Filtering Recommendation")
     st.caption("Recommends unvisited destinations by analyzing user-user behavioral similarities from past trips.")
